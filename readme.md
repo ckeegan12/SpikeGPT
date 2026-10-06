@@ -12,18 +12,33 @@ This repo is inspired by the [RWKV-LM](https://github.com/BlinkDL/RWKV-LM).
 
 If you find yourself struggling with environment configuration, consider using the Docker image for SpikeGPT available on [Github](https://github.com/eddiem3/SpikeGPT-container).
 
+## How SpikeGPT works
+
+[docs/SpikeGPT_explained.md](docs/SpikeGPT_explained.md) walks through the model layer by layer and
+neuron by neuron, written for readers who know CNNs but are new to spiking neural networks.
+
+## Training SpikeGPT-1B
+
+`train.py` trains **SpikeGPT-1B**: the same architecture as the 216M model, scaled to 19 layers ×
+2048 width = 1,242,363,904 parameters, matching Llama 3.2 1B (1,235,814,400).
+
+1. Get a binidx corpus tokenized with `20B_tokenizer.json` (see *Pre-training on large corpus* below).
+2. Set `datafile_train` in `train.py` to its path, without the `.bin` / `.idx` extension.
+3. Run `accelerate launch train.py`. Each GPU holds the full model (~20 GB for weights, gradients
+   and Adam state, plus an estimated ~5 GB of activations per sequence); lower `batch_size` if you run out of memory.
+4. Generate text with `run.py` after setting `MODEL_NAME` to the saved checkpoint (without `.pth`).
+
 ## Training on Enwik8
 
 1. Download the `enwik8` dataset by visiting the following link:
    [enwik8 dataset](https://drive.google.com/file/d/1aZQSJctBOYXx76Dld-iioD-v1kR4JHtn/view?usp=sharing).
 
-2. Modify the train set, validate set, and test set paths in the `train.py` script to match the directory where you've extracted the files. For example, if you've extracted the files to a directory named `enwik8_data`, your `train.py` script should be updated as follows:
+2. Character-level enwik8 reads a text file instead of binidx. In `train.py`, replace the dataset line and
+   pick a smaller model size (e.g. `n_layer = 18`, `n_embd = 768`):
 
    ```python
-   # Set the paths for the datasets
-   datafile_train = "path/to/enwik8_data/train"
-   datafile_valid = "path/to/enwik8_data/validate"
-   datafile_test = "path/to/enwik8_data/test"
+   train_dataset = Dataset(open("path/to/enwik8_data/train", "r", encoding="utf-8").read(), ctx_len, epoch_length_fixed)
+   ```
 
 
 ## Pre-training on large corpus
@@ -35,7 +50,7 @@ If you find yourself struggling with environment configuration, consider using t
    - If resources are limited, you may use just one file from the dataset instead of the entire collection.
 
 2. **Configuring the Training Script**: 
-   - In `train.py`, uncomment line 82 to enable `MMapIndexedDataset` as the dataset class. 
+   - `train.py` uses `MMapIndexedDataset` as the dataset class.
    - Change `datafile_train` to the filename of your binidx file. 
    - Important: Do not include the `.bin` or `.idx` file extensions.
 

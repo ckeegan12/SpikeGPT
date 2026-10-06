@@ -134,8 +134,8 @@ class Trainer:
                     optimizer.step()
 
                     if config.lr_decay:  # decay the learning rate based on our progress
-                        # number of tokens processed this step (i.e. label is not -100)
-                        self.tokens += (y >= 0).sum()
+                        # number of tokens processed this step by all processes (i.e. label is not -100)
+                        self.tokens += (y >= 0).sum() * accelerator.num_processes
                         lr_final_factor = config.lr_final / config.learning_rate
                         if self.tokens < config.warmup_tokens:
                             # linear warmup
