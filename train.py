@@ -18,39 +18,46 @@ torch.backends.cudnn.allow_tf32 = True
 torch.backends.cuda.matmul.allow_tf32 = True
 
 
+# SpikeGPT-1B: the same architecture as the repo's 216M model, scaled to the
+# parameter count of Llama 3.2 1B (1,235,814,400). See docs/SpikeGPT_explained.md.
+#
+#   params = n_layer * (13*n_embd^2 + 11*n_embd) + 4*n_embd + 2*vocab_size*n_embd
+#          = 19 * (13*2048^2 + 11*2048) + 4*2048 + 2*50277*2048
+#          = 1,242,363,904   (+0.53% vs Llama 3.2 1B)
+#
+# Launch on multiple GPUs with:  accelerate launch train.py
+
 ### Step 1: set training data ##########################################################################
 
-datafile_train = "enwik8" # txt file or binidx file
-datafile_valid = "valid.txt"
-datafile_test = "test.txt"
-datafile_encoding = 'utf-8'
-# datafile_encoding = 'utf-16le'
+# binidx corpus tokenized with 20B_tokenizer.json (e.g. the pre-tokenized Pile, see readme).
+# Give the path WITHOUT the .bin / .idx extension.
+datafile_train = "pile_binidx/pile_text_document"
 
 ### Step 2: set model size #############################################################################
 
 ctx_len = 1024        # ===> increase T_MAX in model.py if your ctx_len > 1024
-n_layer = 24
-n_embd = 768
+n_layer = 19
+n_embd = 2048
 
 # 'RWKV' (better for char-level English) or 'RWKV-ffnPre' (better in some cases)
 model_type = 'RWKV'
 
 ### Step 3: set batch size #############################################################################
 
-# ===> batch_size must be divisible by B_GROUP_FORWARD and B_GROUP_BACKWARD in model.py
-# For example, if your batch_size = 20, you can set B_GROUP_FORWARD = 4, B_GROUP_BACKWARD = 2
-# If you see "CUDA out of memory", reduce it. Use GPU-Z to find the highest value for your VRAM.
-batch_size = 12
+# Per-GPU micro batch. Each 1024-token sequence needs an estimated ~5 GB of fp32 activations
+# at this size, on top of ~20 GB for weights + gradients + Adam state.
+# If you see "CUDA out of memory", reduce it.
+batch_size = 8
 
 ### Step 4: set learning rate, training mini-epochs #######################################################
 
-lr_init = 6e-4
+lr_init = 3e-4
 lr_final = 1e-5
 # the mini-epoch is very short and of fixed length (ctx_len * epoch_length_fixed tokens)
 n_epoch = 1000
 # 0 = never, 1 = every mini-epoch, 2 = every two mini-epochs, etc.
 epoch_save_frequency = 10
-epoch_save_path = 'your_path'
+epoch_save_path = 'SpikeGPT-1B-'
 
 epoch_length_fixed = 10000
 
@@ -64,7 +71,7 @@ logging.basicConfig(format="%(asctime)s - %(levelname)s - %(name)s - %(message)s
                     datefmt="%Y-%m-%d %H:%M:%S", level=logging.INFO,)
 
 grad_norm_clip = 1.0
-warmup_tokens = 0
+warmup_tokens = 20 * epoch_length_fixed * ctx_len  # first 2% of n_epoch
 
 betas = (0.9, 0.99)
 eps = 4e-9
@@ -76,16 +83,7 @@ num_workers = 0
 ########################################################################################################
 
 print('loading data... ' + datafile_train)
-train_dataset = Dataset(open(
-    datafile_train, "r", encoding=datafile_encoding).read(), ctx_len, epoch_length_fixed)
-
-#train_dataset = Dataset(MMapIndexedDataset(datafile_train), ctx_len, epoch_length_fixed) #use it when you use binidx files
-
-# valid_dataset = Dataset(open(
-#     datafile_valid, "r", encoding=datafile_encoding).read(), ctx_len, epoch_length_fixed) 
-
-# test_dataset = Dataset(open(
-#     datafile_test, "r", encoding=datafile_encoding).read(), ctx_len, epoch_length_fixed)
+train_dataset = Dataset(MMapIndexedDataset(datafile_train), ctx_len, epoch_length_fixed)
 ########################################################################################################
 # Train model
 ########################################################################################################

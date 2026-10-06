@@ -27,8 +27,6 @@ print(f'\nRWKV_HEAD_QK_DIM {RWKV_HEAD_QK_DIM} RWKV_JIT_ON {os.environ["RWKV_JIT_
 
 DEBUG_TIME = False   # True False - show trained time-coeffs
 
-RWKV_RESCALE_LAYER = 6 # set x=x/2 every X layer
-
 ############################################################################################################
 
 class RWKV_RNN(MyModule):
@@ -47,14 +45,6 @@ class RWKV_RNN(MyModule):
             keys = list(w.keys())
             print_need_newline = False
             for x in keys:
-                block_id = 0
-                if 'blocks.' in x:
-                    block_id = int(x.split('.')[1])
-                if 'att.output.weight' in x:
-                    w[x] = w[x] / (2 ** int(block_id // RWKV_RESCALE_LAYER))
-                if 'ffn.value.weight' in x:
-                    w[x] = w[x] / (2 ** int(block_id // RWKV_RESCALE_LAYER))
-                                
                 if '.time_' in x:
                     w[x] = w[x].squeeze()
                     if DEBUG_TIME:
@@ -195,11 +185,8 @@ class RWKV_RNN(MyModule):
             w = self.w
             args = self.args
 
-            if self.args.vocab_size == 77:
-                atan = ATan()
-                x = atan(w.emb.weight[ctx[-1]])
-            else:
-                x = w.emb.weight[ctx[-1]]
+            # spike-encode the embedding exactly like GPT.forward in src/model.py
+            x = ATan()(w.emb.weight[ctx[-1]])
             if self.RUN_DEVICE == 'cuda':
                 x = x.cuda()
             try:
@@ -235,8 +222,6 @@ class RWKV_RNN(MyModule):
                     ww.key.weight, ww.value.weight, ww.receptance.weight, mem2)
 
                 x = x + ffn
-                if (i+1) % RWKV_RESCALE_LAYER == 0:
-                    x = x / 2
 
             if preprocess_only:
                 return state, mem1, mem2
