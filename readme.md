@@ -28,6 +28,8 @@ neuron by neuron, written for readers who know CNNs but are new to spiking neura
    and Adam state, plus an estimated ~5 GB of activations per sequence); lower `batch_size` if you run out of memory.
 4. Generate text with `run.py` after setting `MODEL_NAME` to the saved checkpoint (without `.pth`).
 
+Running on an NVIDIA DGX Spark? Follow [DGX_SPARK.md](DGX_SPARK.md) for step-by-step setup (CUDA 13, ARM64).
+
 ## Training on Enwik8
 
 1. Download the `enwik8` dataset by visiting the following link:
