@@ -35,7 +35,7 @@ os.environ["RWKV_JIT_ON"] = '1' # '1' or '0'. very useful for GPU/CPU fp32, but 
 # UNKNOWN_CHAR = ' '
 # vocab_size = 77
 
-#For SpikeGPT-1B trained with train.py (Pile 20B tokenizer)
+#For SpikeGPT-216M trained with train.py (Pile 20B tokenizer)
 TOKEN_MODE = "pile"
 WORD_NAME = [
     "20B_tokenizer.json",
@@ -44,9 +44,9 @@ WORD_NAME = [
 UNKNOWN_CHAR = None
 vocab_size = 50277
 
-MODEL_NAME = 'SpikeGPT-1B-1000'  # checkpoint saved by train.py, without .pth
-n_layer = 19
-n_embd = 2048
+MODEL_NAME = 'SpikeGPT-216M-500'  # checkpoint saved by train.py, without .pth
+n_layer = 18
+n_embd = 768
 ctx_len = 1024
 
 args.MODEL_NAME = MODEL_NAME

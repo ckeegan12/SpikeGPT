@@ -30,6 +30,8 @@ neuron by neuron, written for readers who know CNNs but are new to spiking neura
 
 Running on an NVIDIA DGX Spark? Follow [DGX_SPARK.md](DGX_SPARK.md) for step-by-step setup (CUDA 13, ARM64).
 
+Training the 216M model on two 12 GB Pascal GPUs (TITAN Xp / TITAN X)? Use the `spike216M` branch and follow [TITAN_216M.md](TITAN_216M.md).
+
 ## Training on Enwik8
 
 1. Download the `enwik8` dataset by visiting the following link:

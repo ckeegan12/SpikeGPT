@@ -18,46 +18,47 @@ torch.backends.cudnn.allow_tf32 = True
 torch.backends.cuda.matmul.allow_tf32 = True
 
 
-# SpikeGPT-1B: the same architecture as the repo's 216M model, scaled to the
-# parameter count of Llama 3.2 1B (1,235,814,400). See docs/SpikeGPT_explained.md.
+# SpikeGPT-216M: the original SpikeGPT size, set up for two 12 GB GPUs (TITAN Xp + TITAN X).
+# See docs/SpikeGPT_explained.md and TITAN_216M.md.
 #
 #   params = n_layer * (13*n_embd^2 + 11*n_embd) + 4*n_embd + 2*vocab_size*n_embd
-#          = 19 * (13*2048^2 + 11*2048) + 4*2048 + 2*50277*2048
-#          = 1,242,363,904   (+0.53% vs Llama 3.2 1B)
+#          = 18 * (13*768^2 + 11*768) + 4*768 + 2*50277*768
+#          = 215,399,424
 #
-# Launch on multiple GPUs with:  accelerate launch train.py
+# Launch on both GPUs with:
+#   accelerate launch --multi_gpu --num_processes 2 --mixed_precision no train.py
 
 ### Step 1: set training data ##########################################################################
 
-# binidx corpus tokenized with 20B_tokenizer.json (e.g. the pre-tokenized Pile, see readme).
-# Give the path WITHOUT the .bin / .idx extension.
-datafile_train = "pile_binidx/pile_text_document"
+# binidx corpus tokenized with 20B_tokenizer.json, WITHOUT the .bin / .idx extension.
+# download_data.py puts one Pile shard at data/pile.bin + data/pile.idx.
+datafile_train = "data/pile"
 
 ### Step 2: set model size #############################################################################
 
 ctx_len = 1024        # ===> increase T_MAX in model.py if your ctx_len > 1024
-n_layer = 19
-n_embd = 2048
+n_layer = 18
+n_embd = 768
 
 # 'RWKV' (better for char-level English) or 'RWKV-ffnPre' (better in some cases)
 model_type = 'RWKV'
 
 ### Step 3: set batch size #############################################################################
 
-# Per-GPU micro batch. Each 1024-token sequence needs an estimated ~5 GB of fp32 activations
-# at this size, on top of ~20 GB for weights + gradients + Adam state.
-# If you see "CUDA out of memory", reduce it.
-batch_size = 8
+# Per-GPU micro batch. Each 1024-token sequence needs an estimated ~1.7 GB of fp32 activations
+# at this size, on top of ~3.5 GB for weights + gradients + Adam state.
+# If you see "CUDA out of memory", reduce it to 1.
+batch_size = 2
 
 ### Step 4: set learning rate, training mini-epochs #######################################################
 
-lr_init = 3e-4
+lr_init = 6e-4
 lr_final = 1e-5
 # the mini-epoch is very short and of fixed length (ctx_len * epoch_length_fixed tokens)
-n_epoch = 1000
+n_epoch = 500
 # 0 = never, 1 = every mini-epoch, 2 = every two mini-epochs, etc.
 epoch_save_frequency = 10
-epoch_save_path = 'SpikeGPT-1B-'
+epoch_save_path = 'SpikeGPT-216M-'
 
 epoch_length_fixed = 10000
 
