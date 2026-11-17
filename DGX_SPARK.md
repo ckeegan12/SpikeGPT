@@ -55,7 +55,7 @@ the operating system share the same 128 GB. Two habits help:
 
 ```bash
 cd ~
-git clone -b claude/nice-mccarthy-r7o5ox https://github.com/ckeegan12/SpikeGPT.git
+git clone -b spike1B https://github.com/ckeegan12/SpikeGPT.git
 cd SpikeGPT
 ```
 
