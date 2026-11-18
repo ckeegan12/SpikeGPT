@@ -122,28 +122,14 @@ The first run takes a minute or two while `nvcc` compiles `cuda/wkv_cuda.cu`. Ex
 
 ## Step 7: Get training data
 
-`train.py` reads a **binidx** corpus (a `.bin` + `.idx` pair) tokenized with the repo's
-`20B_tokenizer.json`. The pre-tokenized Pile on Hugging Face is in this format. You don't need all
-of it: one shard is enough for a test.
+```bash
+cd ~/SpikeGPT && source .venv/bin/activate
+python download_data.py
+```
 
-1. Open https://huggingface.co/datasets/RichardErkhov/RWKV-LM_pile_binidx_dataset in a browser
-   and pick one `.bin` / `.idx` pair with the same name.
-2. Download that pair (replace `<name>` with the file name without its extension):
-
-   ```bash
-   mkdir -p ~/SpikeGPT/data
-   hf download RichardErkhov/RWKV-LM_pile_binidx_dataset --repo-type dataset \
-       --include "<name>.bin" "<name>.idx" --local-dir ~/SpikeGPT/data
-   ```
-
-   On older `huggingface_hub` versions the command is `huggingface-cli download` with the same
-   arguments.
-
-3. Open `train.py` and set `datafile_train` to that path **without** the extension:
-
-   ```python
-   datafile_train = "data/<name>"
-   ```
+This downloads one shard of the pre-tokenized Pile (tokenized with the repo's
+`20B_tokenizer.json`; a shard can be many GB) and links it as `data/pile`, which is where
+`train.py` looks. At the end it prints the shard's size and approximate token count.
 
 ## Step 8: Short test run (about 10 minutes)
 

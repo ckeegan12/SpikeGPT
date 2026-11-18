@@ -29,9 +29,9 @@ torch.backends.cuda.matmul.allow_tf32 = True
 
 ### Step 1: set training data ##########################################################################
 
-# binidx corpus tokenized with 20B_tokenizer.json (e.g. the pre-tokenized Pile, see readme).
-# Give the path WITHOUT the .bin / .idx extension.
-datafile_train = "pile_binidx/pile_text_document"
+# binidx corpus tokenized with 20B_tokenizer.json, WITHOUT the .bin / .idx extension.
+# download_data.py puts one Pile shard at data/pile.bin + data/pile.idx.
+datafile_train = "data/pile"
 
 ### Step 2: set model size #############################################################################
 
