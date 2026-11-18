@@ -6,7 +6,6 @@ from .. import configure
 import os
 import threading
 import datetime
-from torch.utils.tensorboard import SummaryWriter
 import re
 try:
     import cupy
@@ -120,6 +119,7 @@ class GPUMonitor(threading.Thread):
         if log_dir is None:
             self.writer = None
         else:
+            from torch.utils.tensorboard import SummaryWriter
             self.writer = []
             for i in range(self.gpu_ids.__len__()):
                 self.writer.append(SummaryWriter(os.path.join(log_dir, f'gpu_{id_str[i]}')))
